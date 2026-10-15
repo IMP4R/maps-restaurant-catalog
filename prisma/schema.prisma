@@ -1,0 +1,52 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  telegramId  BigInt   @unique
+  username    String?
+  firstName   String?
+  balance     Float    @default(0)
+  rating      Float    @default(5.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lots        Lot[]
+  dealsAsSeller Deal[] @relation("SellerDeals")
+  dealsAsBuyer  Deal[] @relation("BuyerDeals")
+}
+
+model Lot {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  price       Float
+  sellerId    Int
+  seller      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  status      String   @default("Active")
+  createdAt   DateTime @default(now())
+
+  deals Deal[]
+}
+
+model Deal {
+  id          Int      @id @default(autoincrement())
+  lotId       Int
+  lot         Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  buyerId     Int
+  buyer       User     @relation("BuyerDeals", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId    Int
+  seller      User     @relation("SellerDeals", fields: [sellerId], references: [id], onDelete: Cascade)
+  amount      Float
+  status      String   @default("PendingPayment")
+  escrowAddress String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
